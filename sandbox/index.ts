@@ -2,13 +2,13 @@ import 'dotenv/config';
 import { client } from '../src/services/redis';
 
 const run = async () => {
+	await client.hSet('car', {
+		color: 'red',
+		year: 1950
+	});
 
-    await client.hSet('car', {
-        color: 'red',
-        year: 1950
-    });
-
-    const car = await client.hGetAll('car');
-    console.log(car);
+	const car = await client.hGetAll('car');
+	console.log(car);
+	console.log(await client.PING());
 };
 run();
