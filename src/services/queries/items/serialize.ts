@@ -9,7 +9,9 @@ export const serialize = (attrs: CreateItemAttrs) => {
 
     return {
         ...attrs,
+        // converting to store as milliseconds.
         createdAt: attrs.createdAt.toMillis(),
+        // converting to store as milliseconds.
         endingAt: attrs.endingAt.toMillis()
     };
 };

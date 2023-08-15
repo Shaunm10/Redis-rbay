@@ -1,4 +1,8 @@
+import { itemsKey } from '$services/keys';
+import { client } from '$services/redis';
 import type { CreateItemAttrs } from '$services/types';
+import { genId } from '$services/utils';
+import { serialize } from './serialize';
 
 /**
  * Get's single item.
@@ -17,4 +21,15 @@ export const getItems = async (ids: string[]) => { };
  * @param attrs the data about the item
  * @param userId The user's Id who is creating the item
  */
-export const createItem = async (attrs: CreateItemAttrs, userId: string) => { };
+export const createItem = async (attrs: CreateItemAttrs, userId: string) => {
+
+    const Id = genId();
+
+    // map it to Redis friendly object.
+    const createdItem = serialize(attrs);
+
+    await client.hSet(itemsKey(Id), createdItem);
+
+    return Id;
+
+};

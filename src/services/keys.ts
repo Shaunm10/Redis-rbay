@@ -6,4 +6,4 @@ export const userKey = (usersId: string) => `users#${usersId}`;
 
 export const sessionKey = (sessionId: string) => `sessions#${sessionId}`;
 
-export const itemKey = (itemKey: string) => `items#${itemKey}`;
+export const itemsKey = (itemId: string) => `items#${itemId}`;
