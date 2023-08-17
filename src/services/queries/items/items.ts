@@ -2,13 +2,25 @@ import { itemsKey } from '$services/keys';
 import { client } from '$services/redis';
 import type { CreateItemAttrs } from '$services/types';
 import { genId } from '$services/utils';
+import { deserialize } from './deserialize';
 import { serialize } from './serialize';
 
 /**
  * Get's single item.
  * @param id The Id of the item.
  */
-export const getItem = async (id: string) => { };
+export const getItem = async (id: string) => {
+    const itemFromRedis = await client.hGetAll(itemsKey(id));
+
+    // protect against Redis returning a new object
+    if (Object.keys(itemFromRedis).length === 0) {
+        return null;
+    }
+
+    const viewModel = deserialize(id, itemFromRedis);
+
+    return viewModel;
+};
 
 /**
  * Gets multiple Items
