@@ -10,23 +10,25 @@ import { serialize } from './serialize';
  * @param id The Id of the item.
  */
 export const getItem = async (id: string) => {
-    const itemFromRedis = await client.hGetAll(itemsKey(id));
+	const itemFromRedis = await client.hGetAll(itemsKey(id));
 
-    // protect against Redis returning a new object
-    if (Object.keys(itemFromRedis).length === 0) {
-        return null;
-    }
+	// protect against Redis returning a new object
+	if (Object.keys(itemFromRedis).length === 0) {
+		return null;
+	}
 
-    const viewModel = deserialize(id, itemFromRedis);
+	const viewModel = deserialize(id, itemFromRedis);
 
-    return viewModel;
+	return viewModel;
 };
 
 /**
  * Gets multiple Items
  * @param ids the Id's of the items to retrieve.
  */
-export const getItems = async (ids: string[]) => { };
+export const getItems = async (ids: string[]) => {
+	return [];
+};
 
 /**
  * Creates a brand new item.
@@ -34,14 +36,12 @@ export const getItems = async (ids: string[]) => { };
  * @param userId The user's Id who is creating the item
  */
 export const createItem = async (attrs: CreateItemAttrs, userId: string) => {
+	const Id = genId();
 
-    const Id = genId();
+	// map it to Redis friendly object.
+	const createdItem = serialize(attrs);
 
-    // map it to Redis friendly object.
-    const createdItem = serialize(attrs);
+	await client.hSet(itemsKey(Id), createdItem);
 
-    await client.hSet(itemsKey(Id), createdItem);
-
-    return Id;
-
+	return Id;
 };
