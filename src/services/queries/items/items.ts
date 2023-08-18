@@ -27,7 +27,28 @@ export const getItem = async (id: string) => {
  * @param ids the Id's of the items to retrieve.
  */
 export const getItems = async (ids: string[]) => {
-	return [];
+	// create a command from each Id, not awaited.
+	const commands = ids.map((id) => {
+		return client.hGetAll(itemsKey(id));
+	});
+
+	// await all in parallel
+	var results = await Promise.all(commands);
+
+	const returnResults = [];
+
+	results.forEach((redisItem, i) => {
+		// check to see if this object has keys.
+		if (Object.keys(redisItem).length !== 0) {
+			// deserialize the item
+			const deserializedItem = deserialize(ids[i], redisItem);
+
+			// add it to the list.
+			returnResults.push(deserialize);
+		}
+	});
+
+	return returnResults;
 };
 
 /**
