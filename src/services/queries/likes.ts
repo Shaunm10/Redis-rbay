@@ -7,11 +7,11 @@ export const likedItems = async (userId: string) => { };
 
 /** Adds a liked item for a user. */
 export const likeItem = async (itemId: string, userId: string) => {
-
-    //userLikesKey(userId)
-    //client.sInter
+    await client.sAdd(userLikesKey(userId), itemId);
 };
 
-export const unlikeItem = async (itemId: string, userId: string) => { };
+export const unlikeItem = async (itemId: string, userId: string) => {
+    await client.sRem(userLikesKey(userId), itemId);
+};
 
 export const commonLikedItems = async (userOneId: string, userTwoId: string) => { };
