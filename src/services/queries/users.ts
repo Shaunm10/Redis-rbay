@@ -1,9 +1,10 @@
-import { userKey } from '$services/keys';
+import { userKey, userNameUniqueKey } from '$services/keys';
 import { client } from '$services/redis';
 import type { CreateUserAttrs } from '$services/types';
 import { genId } from '$services/utils';
+import { attr } from 'svelte/internal';
 
-export const getUserByUsername = async (username: string) => {};
+export const getUserByUsername = async (username: string) => { };
 
 export const getUserById = async (id: string) => {
 	// get the user hash via the userId key.
@@ -17,11 +18,20 @@ export const createUser = async (attrs: CreateUserAttrs) => {
 	// generate a new key for this user.
 	const newUserKey = genId();
 
-	// TODO: verify username is unique
+	// See if this user name is already taken.
+	const exists = await client.sIsMember(userNameUniqueKey(), attrs.username);
+	// if it is throw an error
+	if (exists) {
+		throw new Error(`'${attrs.username}' is already taken.  Please try a different name.`)
+	}
+	// otherwise allow it to be created.
 
 	// store the set for this user given the new key.
 	// NOTE the password is already salt'ed
 	await client.hSet(userKey(newUserKey), serialize(attrs));
+
+	// also add the name to the unique name list.
+	await client.sAdd(userNameUniqueKey(), attrs.username);
 
 	return newUserKey;
 };
