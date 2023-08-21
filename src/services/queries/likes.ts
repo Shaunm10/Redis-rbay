@@ -1,5 +1,6 @@
 import { itemsKey, userLikesKey } from "$services/keys";
 import { client } from "$services/redis";
+import { getItems } from "./items";
 
 const likes = 'likes';
 /** If a user has liked a particular item. */
@@ -9,7 +10,15 @@ export const userLikesItem = async (itemId: string, userId: string) => {
     return isItemLiked;
 };
 
-export const likedItems = async (userId: string) => { };
+export const likedItems = async (userId: string) => {
+    // fetch all the item Id's from this user's likes.
+    const ids = await client.sMembers(userLikesKey(userId));
+
+
+    // fetch all the user hashes that contains those Ids and return as array.
+    return getItems(ids);
+
+};
 
 /** Adds a liked item for a user. */
 export const likeItem = async (itemId: string, userId: string) => {
