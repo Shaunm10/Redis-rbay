@@ -40,4 +40,9 @@ export const unlikeItem = async (itemId: string, userId: string) => {
 	}
 };
 
-export const commonLikedItems = async (userOneId: string, userTwoId: string) => {};
+export const commonLikedItems = async (userOneId: string, userTwoId: string) => {
+	// SINTER colors:1 colors:2 colors:3
+	var ids = await client.sInter([userLikesKey(userOneId), userLikesKey(userTwoId)]);
+
+	return getItems(ids);
+};
