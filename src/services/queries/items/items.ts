@@ -44,7 +44,7 @@ export const getItems = async (ids: string[]) => {
 			const deserializedItem = deserialize(ids[i], redisItem);
 
 			// add it to the list.
-			returnResults.push(deserialize);
+			returnResults.push(deserializedItem);
 		}
 	});
 
