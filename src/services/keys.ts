@@ -11,3 +11,5 @@ export const itemsKey = (itemId: string) => `items#${itemId}`;
 export const userNameUniqueKey = () => 'userNames:unique';
 
 export const userLikesKey = (userId: string) => `users:like#${userId}`;
+
+export const usernamesKey = () => 'usernames';
