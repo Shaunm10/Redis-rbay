@@ -1,17 +1,15 @@
-import { itemsByViewKey, itemsKey } from "$services/keys";
-import { client } from "$services/redis";
+import { itemsByViewKey, itemsKey } from '$services/keys';
+import { client } from '$services/redis';
 
-const ViewsPropertyName = 'views';
+const views = 'views';
 
 export const incrementView = async (itemId: string, userId: string) => {
+	// do both actions in parallel
+	await Promise.all([
+		// update the hash set view count.
+		client.hIncrBy(itemsKey(itemId), views, 1),
 
-    // do both actions in parallel
-    await Promise.all([
-
-        // update the hash set view count.
-        client.hIncrBy(itemsKey(itemId), ViewsPropertyName, 1),
-
-        // update the sorted set's view.
-        client.zIncrBy(itemsByViewKey(), 1, itemId)
-    ]);
+		// update the sorted set's view.
+		client.zIncrBy(itemsByViewKey(), 1, itemId)
+	]);
 };
