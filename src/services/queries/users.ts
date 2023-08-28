@@ -2,9 +2,9 @@ import { userKey, userLikesKey, userNameUniqueKey, usernamesKey } from '$service
 import { client } from '$services/redis';
 import type { CreateUserAttrs } from '$services/types';
 import { genId } from '$services/utils';
-import { attr } from 'svelte/internal';
 
 export const getUserByUsername = async (username: string) => {
+
 	// use the username arg to look up the person's (numeric)UserId to get the Hash
 	const numericId = await client.zScore(usernamesKey(), username);
 
