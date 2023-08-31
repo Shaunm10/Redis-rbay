@@ -1,4 +1,4 @@
-import { itemsByViewKey, itemsKey } from '$services/keys';
+import { itemsByEndingAtKey, itemsByViewKey, itemsKey } from '$services/keys';
 import { client } from '$services/redis';
 import type { CreateItemAttrs } from '$services/types';
 import { genId } from '$services/utils';
@@ -63,7 +63,6 @@ export const createItem = async (attrs: CreateItemAttrs, userId: string) => {
 	// map it to Redis friendly object.
 	const createdItem = serialize(attrs);
 
-
 	// using pipeline'ing in Redis to do both actions in parallel
 	await Promise.all([
 		client.hSet(itemsKey(Id), createdItem),
@@ -71,6 +70,11 @@ export const createItem = async (attrs: CreateItemAttrs, userId: string) => {
 		client.zAdd(itemsByViewKey(), {
 			value: Id,
 			score: 0
+		}),
+		// also add it to the sorted set of items:EndingAt
+		client.zAdd(itemsByEndingAtKey(), {
+			value: Id,
+			score: attrs.endingAt.toMillis()
 		})
 	]);
 

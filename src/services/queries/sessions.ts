@@ -11,7 +11,6 @@ export const getSession = async (id: string) => {
 		return null;
 	}
 
-	console.log(session);
 	return deserialize(id, session);
 };
 
