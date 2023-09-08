@@ -38,3 +38,14 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+## Redis Setup
+To connect to a redis server, you will need a `.env` file in the root with the connection details.
+
+Example:
+
+```
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PW=
+```
