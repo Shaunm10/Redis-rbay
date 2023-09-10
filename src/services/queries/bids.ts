@@ -10,7 +10,17 @@ export const createBid = async (attrs: CreateBidAttrs) => {
 };
 
 export const getBidHistory = async (itemId: string, offset = 0, count = 10): Promise<Bid[]> => {
-	return [];
+	const key = bidHistoryKey(itemId);
+
+	const listValues = await client.lRange(key, offset, count);
+
+	if (listValues.length === 0) {
+		return [];
+	}
+
+	const bids = listValues.map(x => deserialize(x));
+
+	return bids;
 };
 
 
@@ -24,7 +34,7 @@ const deserialize = (value: string) => {
 	// sanity check, if the value doesn't have a single ':', 
 	// than fail fast.
 	if (value.indexOf(':') === -1) {
-		return '';
+		return { amount: 0, createdAt: DateTime.now() };
 	}
 
 	const [amount, createdAt] = value.split(':');
