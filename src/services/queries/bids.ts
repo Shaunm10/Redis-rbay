@@ -3,18 +3,27 @@ import { client } from '$services/redis';
 import type { CreateBidAttrs, Bid } from '$services/types';
 import { DateTime } from 'luxon';
 
-export const createBid = async (attrs: CreateBidAttrs) => {
-	const serializedValue = serialize(attrs.amount, attrs.createdAt.toMillis());
 
+export const createBid = async (attrs: CreateBidAttrs) => {
+
+	// convert to a version that we can store in Redis
+	const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
+
+	// add this to the linked list on the right side with the ID
 	return await client.rPush(bidHistoryKey(attrs.itemId), serializedValue);
 };
 
 export const getBidHistory = async (itemId: string, offset = 0, count = 10): Promise<Bid[]> => {
+
+	// create the key for this item
 	const key = bidHistoryKey(itemId);
 
+	// get a list of all the values from this key with the start index, and number to pull back.
 	const listValues = await client.lRange(key, offset, count);
 
+	// if we don't have values
 	if (listValues.length === 0) {
+		// return an empty list
 		return [];
 	}
 
@@ -24,7 +33,7 @@ export const getBidHistory = async (itemId: string, offset = 0, count = 10): Pro
 };
 
 
-const serialize = (amount: number, createdAt: number) => {
+const serializeHistory = (amount: number, createdAt: number) => {
 	return `${amount}:${createdAt}`;
 };
 
