@@ -18,8 +18,11 @@ export const getBidHistory = async (itemId: string, offset = 0, count = 10): Pro
 	// create the key for this item
 	const key = bidHistoryKey(itemId);
 
+	const startIndex = -1 * offset - count;
+
+	const endIndex = -1 - offset;
 	// get a list of all the values from this key with the start index, and number to pull back.
-	const listValues = await client.lRange(key, offset, count);
+	const listValues = await client.lRange(key, startIndex, endIndex);
 
 	// if we don't have values
 	if (listValues.length === 0) {
@@ -27,7 +30,7 @@ export const getBidHistory = async (itemId: string, offset = 0, count = 10): Pro
 		return [];
 	}
 
-	const bids = listValues.map(x => deserialize(x));
+	const bids = listValues.map(bid => deserializeHistory(bid));
 
 	return bids;
 };
@@ -38,11 +41,12 @@ const serializeHistory = (amount: number, createdAt: number) => {
 };
 
 
-const deserialize = (value: string) => {
+const deserializeHistory = (value: string) => {
 
 	// sanity check, if the value doesn't have a single ':', 
 	// than fail fast.
 	if (value.indexOf(':') === -1) {
+		// empty object basically.
 		return { amount: 0, createdAt: DateTime.now() };
 	}
 
