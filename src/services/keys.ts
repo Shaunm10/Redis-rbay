@@ -17,6 +17,8 @@ export const itemsByViewKey = () => 'items:views';
 export const itemsKey = (itemId: string) => `items#${itemId}`;
 export const itemsByEndingAtKey = () => `items:endingAt`;
 
+export const itemsByPriceKey = () => 'items:price';
+
 /**
  * The key for storing userId views by productId
  * Used in a HyperLogLog

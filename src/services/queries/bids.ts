@@ -1,8 +1,8 @@
-import { bidHistoryKey, itemsKey } from '$services/keys';
+import { bidHistoryKey, itemsByPriceKey, itemsKey } from '$services/keys';
 import { client } from '$services/redis';
 import type { CreateBidAttrs, Bid, CreateItemAttrs } from '$services/types';
 import { DateTime } from 'luxon';
-import { getItem } from './items';
+import { getItem, itemsByPrice } from './items';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
 	// this will create a client connection to participate in a transaction.
@@ -39,6 +39,10 @@ export const createBid = async (attrs: CreateBidAttrs) => {
 			.multi()
 			.rPush(bidHistoryKey(attrs.itemId), serializedValue) // add this to the linked list on the right side with the ID
 			.hSet(itemsKey(item.id), itemPartial as {}) // update data about this item
+			.zAdd(itemsByPriceKey(), {
+				value: attrs.itemId,
+				score: attrs.amount
+			})
 			.exec();
 	});
 };
