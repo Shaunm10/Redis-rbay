@@ -3,47 +3,44 @@ import { client } from '$services/redis';
 import type { CreateBidAttrs, Bid, CreateItemAttrs } from '$services/types';
 import { DateTime } from 'luxon';
 import { getItem } from './items';
-import { attr } from 'svelte/internal';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
-	/**
-	 * Validation Steps
-	 * - Does the item exist?
-	 * - Is the item still open for bids?
-	 * - Is the bid amount greater than the existing highest bid?
-	 */
+	// this will create a client connection to participate in a transaction.
+	return client.executeIsolated(async (isolatedClient) => {
+		// create a "WATCH" for this item's key
+		await isolatedClient.watch(itemsKey(attrs.itemId));
 
-	const item = await getItem(attrs.itemId);
+		const item = await getItem(attrs.itemId);
 
-	if (!item) {
-		throw new Error('Item does not exist');
-	}
+		if (!item) {
+			throw new Error('Item does not exist');
+		}
 
-	if (item.price >= attrs.amount) {
-		throw new Error('Bid price too low.');
-	}
+		if (item.price >= attrs.amount) {
+			throw new Error('Bid price too low.');
+		}
 
-	if (item.endingAt.diff(DateTime.now()).toMillis() < 0) {
-		throw new Error('Item closed to bidding.');
-	}
+		if (item.endingAt.diff(DateTime.now()).toMillis() < 0) {
+			throw new Error('Item closed to bidding.');
+		}
 
-	// convert to a version that we can store in Redis
-	const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
+		// convert to a version that we can store in Redis
+		const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
 
-	// updating certain properties on the bid
-	const itemPartial: Partial<CreateItemAttrs> = {
-		bids: item.bids + 1,
-		price: attrs.amount,
-		highestBidUserId: attrs.userId
-	};
+		// updating certain properties on the bid
+		const itemPartial: Partial<CreateItemAttrs> = {
+			bids: item.bids + 1,
+			price: attrs.amount,
+			highestBidUserId: attrs.userId
+		};
 
-	return Promise.all([
-		// add this to the linked list on the right side with the ID
-		client.rPush(bidHistoryKey(attrs.itemId), serializedValue),
-
-		// update data about this item
-		client.hSet(itemsKey(item.id), itemPartial as {})
-	]);
+		// note this new from, instead of Promise.all(), we can chain these.
+		return isolatedClient
+			.multi()
+			.rPush(bidHistoryKey(attrs.itemId), serializedValue) // add this to the linked list on the right side with the ID
+			.hSet(itemsKey(item.id), itemPartial as {}) // update data about this item
+			.exec();
+	});
 };
 
 export const getBidHistory = async (itemId: string, offset = 0, count = 10): Promise<Bid[]> => {
