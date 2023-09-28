@@ -6,48 +6,51 @@ import { getItem } from './items';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
 	// now with locking
-	return withLock(attrs.itemId, async (signal: { expired: boolean }) => {
-		// fetch the item
-		// do validation
-		// writing some data
+	return withLock(
+		attrs.itemId,
+		async (lockedClient: typeof client, signal: { expired: boolean }) => {
+			// fetch the item
+			// do validation
+			// writing some data
 
-		const item = await getItem(attrs.itemId);
+			const item = await getItem(attrs.itemId);
 
-		if (!item) {
-			throw new Error('Item does not exist');
+			if (!item) {
+				throw new Error('Item does not exist');
+			}
+
+			if (item.price >= attrs.amount) {
+				throw new Error('Bid price too low.');
+			}
+
+			if (item.endingAt.diff(DateTime.now()).toMillis() < 0) {
+				throw new Error('Item closed to bidding.');
+			}
+
+			// convert to a version that we can store in Redis
+			const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
+
+			// updating certain properties on the bid
+			const itemPartial: Partial<CreateItemAttrs> = {
+				bids: item.bids + 1,
+				price: attrs.amount,
+				highestBidUserId: attrs.userId
+			};
+
+			// if (signal.expired) {
+			// 	throw new Error('Lock expired. No longer able to write data.');
+			// }
+			// note this new from, instead of Promise.all(), we can chain these.
+			return Promise.all([
+				lockedClient.rPush(bidHistoryKey(attrs.itemId), serializedValue), // add this to the linked list on the right side with the ID
+				lockedClient.hSet(itemsKey(item.id), itemPartial as {}), // update data about this item
+				lockedClient.zAdd(itemsByPriceKey(), {
+					value: attrs.itemId,
+					score: attrs.amount
+				})
+			]);
 		}
-
-		if (item.price >= attrs.amount) {
-			throw new Error('Bid price too low.');
-		}
-
-		if (item.endingAt.diff(DateTime.now()).toMillis() < 0) {
-			throw new Error('Item closed to bidding.');
-		}
-
-		// convert to a version that we can store in Redis
-		const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
-
-		// updating certain properties on the bid
-		const itemPartial: Partial<CreateItemAttrs> = {
-			bids: item.bids + 1,
-			price: attrs.amount,
-			highestBidUserId: attrs.userId
-		};
-
-		if (signal.expired) {
-			throw new Error('Lock expired. No longer able to write data.');
-		}
-		// note this new from, instead of Promise.all(), we can chain these.
-		return Promise.all([
-			client.rPush(bidHistoryKey(attrs.itemId), serializedValue), // add this to the linked list on the right side with the ID
-			client.hSet(itemsKey(item.id), itemPartial as {}), // update data about this item
-			client.zAdd(itemsByPriceKey(), {
-				value: attrs.itemId,
-				score: attrs.amount
-			})
-		]);
-	});
+	);
 
 	// this will create a client connection to participate in a transaction.
 	// return client.executeIsolated(async (isolatedClient) => {
