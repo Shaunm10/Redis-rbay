@@ -1,14 +1,15 @@
 import { bidHistoryKey, itemsByPriceKey, itemsKey } from '$services/keys';
-import { client } from '$services/redis';
+import { client, withLock } from '$services/redis';
 import type { CreateBidAttrs, Bid, CreateItemAttrs } from '$services/types';
 import { DateTime } from 'luxon';
-import { getItem, itemsByPrice } from './items';
+import { getItem } from './items';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
-	// this will create a client connection to participate in a transaction.
-	return client.executeIsolated(async (isolatedClient) => {
-		// create a "WATCH" for this item's key
-		await isolatedClient.watch(itemsKey(attrs.itemId));
+	// now with locking
+	return withLock(attrs.itemId, async () => {
+		// fetch the item
+		// do validation
+		// writing some data
 
 		const item = await getItem(attrs.itemId);
 
@@ -35,16 +36,56 @@ export const createBid = async (attrs: CreateBidAttrs) => {
 		};
 
 		// note this new from, instead of Promise.all(), we can chain these.
-		return isolatedClient
-			.multi()
-			.rPush(bidHistoryKey(attrs.itemId), serializedValue) // add this to the linked list on the right side with the ID
-			.hSet(itemsKey(item.id), itemPartial as {}) // update data about this item
-			.zAdd(itemsByPriceKey(), {
+		return Promise.all([
+			client.rPush(bidHistoryKey(attrs.itemId), serializedValue), // add this to the linked list on the right side with the ID
+			client.hSet(itemsKey(item.id), itemPartial as {}), // update data about this item
+			client.zAdd(itemsByPriceKey(), {
 				value: attrs.itemId,
 				score: attrs.amount
 			})
-			.exec();
+		]);
 	});
+
+	// this will create a client connection to participate in a transaction.
+	// return client.executeIsolated(async (isolatedClient) => {
+	// 	// create a "WATCH" for this item's key
+	// 	await isolatedClient.watch(itemsKey(attrs.itemId));
+
+	// 	const item = await getItem(attrs.itemId);
+
+	// 	if (!item) {
+	// 		throw new Error('Item does not exist');
+	// 	}
+
+	// 	if (item.price >= attrs.amount) {
+	// 		throw new Error('Bid price too low.');
+	// 	}
+
+	// 	if (item.endingAt.diff(DateTime.now()).toMillis() < 0) {
+	// 		throw new Error('Item closed to bidding.');
+	// 	}
+
+	// 	// convert to a version that we can store in Redis
+	// 	const serializedValue = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
+
+	// 	// updating certain properties on the bid
+	// 	const itemPartial: Partial<CreateItemAttrs> = {
+	// 		bids: item.bids + 1,
+	// 		price: attrs.amount,
+	// 		highestBidUserId: attrs.userId
+	// 	};
+
+	// 	// note this new from, instead of Promise.all(), we can chain these.
+	// 	return isolatedClient
+	// 		.multi()
+	// 		.rPush(bidHistoryKey(attrs.itemId), serializedValue) // add this to the linked list on the right side with the ID
+	// 		.hSet(itemsKey(item.id), itemPartial as {}) // update data about this item
+	// 		.zAdd(itemsByPriceKey(), {
+	// 			value: attrs.itemId,
+	// 			score: attrs.amount
+	// 		})
+	// 		.exec();
+	// });
 };
 
 export const getBidHistory = async (itemId: string, offset = 0, count = 10): Promise<Bid[]> => {
