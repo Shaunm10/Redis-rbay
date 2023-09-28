@@ -3,7 +3,7 @@ import { client } from '$services/redis';
 
 const views = 'views';
 
-export const incrementView = async (itemId: string, userId: string) => {
+const incrementView_Original = async (itemId: string, userId: string) => {
 	const itemWasInserted = await client.pfAdd(itemsViewsKey(itemId), userId);
 
 	if (itemWasInserted) {
@@ -16,4 +16,8 @@ export const incrementView = async (itemId: string, userId: string) => {
 			client.zIncrBy(itemsByViewKey(), 1, itemId)
 		]);
 	}
+};
+
+export const incrementView = async (itemId: string, userId: string) => {
+	client.incrementView(itemId, userId);
 };
