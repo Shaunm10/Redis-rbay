@@ -40,6 +40,7 @@ You can preview the production build with `npm run preview`.
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
 
 ## Redis Setup
+
 To connect to a redis server, you will need a `.env` file in the root with the connection details.
 
 Example:
@@ -49,3 +50,18 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PW=
 ```
+
+## When a bid is added things that must occur
+
+- Passes `Bid Validation`
+- Add the bid to bid history list
+- Update the # of bids the items has
+- Update the item's price
+- Update the item's hightestUserBidId
+- Update the item's score in the item price sorted set
+
+## Bid Validation
+
+- Does the item exist?
+- Is the item still open for bids?
+- is the bid amount greater than the exiting highest bid?

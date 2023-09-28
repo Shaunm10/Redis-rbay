@@ -13,14 +13,26 @@ export const userLikesKey = (userId: string) => `users:like#${userId}`;
 export const usernamesKey = () => 'usernames';
 
 // Item keys
+
+/**
+ *
+ * @returns `items:views`
+ */
 export const itemsByViewKey = () => 'items:views';
+
+/**
+ *
+ * @returns `items#${itemId}`
+ */
 export const itemsKey = (itemId: string) => `items#${itemId}`;
 export const itemsByEndingAtKey = () => `items:endingAt`;
+
+export const itemsByPriceKey = () => 'items:price';
 
 /**
  * The key for storing userId views by productId
  * Used in a HyperLogLog
- * @param itemId The productId
- * @returns the key
+ * @returns `items:views#${itemId}`
  */
 export const itemsViewsKey = (itemId: string) => `items:views#${itemId}`;
+export const bidHistoryKey = (itemId: string) => `history#${itemId}`;
