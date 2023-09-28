@@ -6,7 +6,7 @@ import { getItem } from './items';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
 	// now with locking
-	return withLock(attrs.itemId, async () => {
+	return withLock(attrs.itemId, async (signal: { expired: boolean }) => {
 		// fetch the item
 		// do validation
 		// writing some data
@@ -35,6 +35,9 @@ export const createBid = async (attrs: CreateBidAttrs) => {
 			highestBidUserId: attrs.userId
 		};
 
+		if (signal.expired) {
+			throw new Error('Lock expired. No longer able to write data.');
+		}
 		// note this new from, instead of Promise.all(), we can chain these.
 		return Promise.all([
 			client.rPush(bidHistoryKey(attrs.itemId), serializedValue), // add this to the linked list on the right side with the ID
