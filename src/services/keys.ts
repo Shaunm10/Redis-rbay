@@ -36,3 +36,6 @@ export const itemsByPriceKey = () => 'items:price';
  */
 export const itemsViewsKey = (itemId: string) => `items:views#${itemId}`;
 export const bidHistoryKey = (itemId: string) => `history#${itemId}`;
+
+// Index keys
+export const itemsIndexKey = () => 'idx:items';
