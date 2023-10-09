@@ -1,1 +1,3 @@
-export const createIndexes = async () => {};
+export const createIndexes = async () => {
+	// coming soon...
+};
