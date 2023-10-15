@@ -15,9 +15,15 @@ export const createIndexes = async () => {
 	return client.ft.CREATE(
 		itemsIndexKey(),
 		{
-			name: { type: SchemaFieldTypes.TEXT },
-			description: { type: SchemaFieldTypes.TEXT }
-		},
+			name: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			description: { type: SchemaFieldTypes.TEXT, SORTABLE: false },
+			ownerId: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			endingAt: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			bids: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			views: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			price: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
+			likes: { type: SchemaFieldTypes.TEXT, SORTABLE: true }
+		} as any,
 		{
 			ON: 'HASH',
 			PREFIX: itemsKey('')

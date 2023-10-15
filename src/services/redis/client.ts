@@ -80,7 +80,7 @@ client.on('connect', async () => {
 		// attempt to add the indexes.
 		await createIndexes();
 	} catch (error) {
-		console.error(error);
+		console.error('Unable to create indexes: ' + error);
 	}
 });
 client.connect();
