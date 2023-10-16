@@ -17,12 +17,12 @@ export const createIndexes = async () => {
 		{
 			name: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
 			description: { type: SchemaFieldTypes.TEXT, SORTABLE: false },
-			ownerId: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
-			endingAt: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
-			bids: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
-			views: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
-			price: { type: SchemaFieldTypes.TEXT, SORTABLE: true },
-			likes: { type: SchemaFieldTypes.TEXT, SORTABLE: true }
+			ownerId: { type: SchemaFieldTypes.TAG, SORTABLE: false },
+			endingAt: { type: SchemaFieldTypes.NUMERIC, SORTABLE: true },
+			bids: { type: SchemaFieldTypes.NUMERIC, SORTABLE: true },
+			views: { type: SchemaFieldTypes.NUMERIC, SORTABLE: true },
+			price: { type: SchemaFieldTypes.NUMERIC, SORTABLE: true },
+			likes: { type: SchemaFieldTypes.NUMERIC, SORTABLE: true }
 		} as any,
 		{
 			ON: 'HASH',
